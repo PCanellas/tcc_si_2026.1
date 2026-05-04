@@ -1,0 +1,107 @@
+RESULTADOS DO BENCHMARK - COUPLED TASK SCHEDULING
+============================================================
+Tempo limite por instancia: 120 segundos
+Total de instancias processadas: 90
+
+Instancia            Tarefas  Tempo(s)   Objetivo     Bound        Gap(%)   Status    
+------------------------------------------------------------------------------------------
+20_10_L_gen.txt      20       0.05       5883         5883         0.00     RESOLVIDO 
+20_10_M_gen.txt      20       0.05       2579         2579         0.00     RESOLVIDO 
+20_10_S_gen.txt      20       0.04       1019         1019         0.00     RESOLVIDO 
+20_1_L_gen.txt       20       0.05       5272         5272         0.00     RESOLVIDO 
+20_1_M_gen.txt       20       0.05       2882         2882         0.00     RESOLVIDO 
+20_1_S_gen.txt       20       0.04       1072         1072         0.00     RESOLVIDO 
+20_2_L_gen.txt       20       0.04       5129         5129         0.00     RESOLVIDO 
+20_2_M_gen.txt       20       0.05       2905         2905         0.00     RESOLVIDO 
+20_2_S_gen.txt       20       0.05       1209         1209         0.00     RESOLVIDO 
+20_3_L_gen.txt       20       0.04       5363         5363         0.00     RESOLVIDO 
+20_3_M_gen.txt       20       0.05       2854         2854         0.00     RESOLVIDO 
+20_3_S_gen.txt       20       0.04       991          991          0.00     RESOLVIDO 
+20_4_L_gen.txt       20       0.05       6308         6308         0.00     RESOLVIDO 
+20_4_M_gen.txt       20       0.05       2848         2848         0.00     RESOLVIDO 
+20_4_S_gen.txt       20       0.04       1141         1141         0.00     RESOLVIDO 
+20_5_L_gen.txt       20       0.05       6129         6129         0.00     RESOLVIDO 
+20_5_M_gen.txt       20       0.05       3055         3055         0.00     RESOLVIDO 
+20_5_S_gen.txt       20       0.05       1124         1124         0.00     RESOLVIDO 
+20_6_L_gen.txt       20       0.04       5486         5486         0.00     RESOLVIDO 
+20_6_M_gen.txt       20       0.05       2944         2944         0.00     RESOLVIDO 
+20_6_S_gen.txt       20       0.04       1011         1011         0.00     RESOLVIDO 
+20_7_L_gen.txt       20       0.05       4633         4633         0.00     RESOLVIDO 
+20_7_M_gen.txt       20       0.04       2703         2703         0.00     RESOLVIDO 
+20_7_S_gen.txt       20       0.05       1234         1234         0.00     RESOLVIDO 
+20_8_L_gen.txt       20       0.04       5423         5423         0.00     RESOLVIDO 
+20_8_M_gen.txt       20       0.05       2693         2693         0.00     RESOLVIDO 
+20_8_S_gen.txt       20       0.04       977          977          0.00     RESOLVIDO 
+20_9_L_gen.txt       20       0.05       5276         5276         0.00     RESOLVIDO 
+20_9_M_gen.txt       20       0.04       3150         3150         0.00     RESOLVIDO 
+20_9_S_gen.txt       20       0.05       1171         1171         0.00     RESOLVIDO 
+25_10_L_gen.txt      25       0.04       7113         7113         0.00     RESOLVIDO 
+25_10_M_gen.txt      25       0.04       3149         3149         0.00     RESOLVIDO 
+25_10_S_gen.txt      25       0.05       1334         1334         0.00     RESOLVIDO 
+25_1_L_gen.txt       25       0.04       6810         6810         0.00     RESOLVIDO 
+25_1_M_gen.txt       25       0.05       3383         3383         0.00     RESOLVIDO 
+25_1_S_gen.txt       25       0.05       1362         1362         0.00     RESOLVIDO 
+25_2_L_gen.txt       25       0.05       7215         7215         0.00     RESOLVIDO 
+25_2_M_gen.txt       25       0.05       3504         3504         0.00     RESOLVIDO 
+25_2_S_gen.txt       25       0.05       1323         1323         0.00     RESOLVIDO 
+25_3_L_gen.txt       25       0.05       7447         7447         0.00     RESOLVIDO 
+25_3_M_gen.txt       25       0.05       3155         3155         0.00     RESOLVIDO 
+25_3_S_gen.txt       25       0.04       1418         1418         0.00     RESOLVIDO 
+25_4_L_gen.txt       25       0.05       6865         6865         0.00     RESOLVIDO 
+25_4_M_gen.txt       25       0.05       3341         3341         0.00     RESOLVIDO 
+25_4_S_gen.txt       25       0.05       1452         1452         0.00     RESOLVIDO 
+25_5_L_gen.txt       25       0.04       5931         5931         0.00     RESOLVIDO 
+25_5_M_gen.txt       25       0.05       3209         3209         0.00     RESOLVIDO 
+25_5_S_gen.txt       25       0.04       1252         1252         0.00     RESOLVIDO 
+25_6_L_gen.txt       25       0.05       6589         6589         0.00     RESOLVIDO 
+25_6_M_gen.txt       25       0.04       3227         3227         0.00     RESOLVIDO 
+25_6_S_gen.txt       25       0.05       1332         1332         0.00     RESOLVIDO 
+25_7_L_gen.txt       25       0.05       6297         6297         0.00     RESOLVIDO 
+25_7_M_gen.txt       25       0.05       3839         3839         0.00     RESOLVIDO 
+25_7_S_gen.txt       25       0.05       1488         1488         0.00     RESOLVIDO 
+25_8_L_gen.txt       25       0.05       6600         6600         0.00     RESOLVIDO 
+25_8_M_gen.txt       25       0.05       3458         3458         0.00     RESOLVIDO 
+25_8_S_gen.txt       25       0.04       1325         1325         0.00     RESOLVIDO 
+25_9_L_gen.txt       25       0.05       7284         7284         0.00     RESOLVIDO 
+25_9_M_gen.txt       25       0.05       3317         3317         0.00     RESOLVIDO 
+25_9_S_gen.txt       25       0.05       1328         1328         0.00     RESOLVIDO 
+40_10_L_gen.txt      40       0.05       9876         9876         0.00     RESOLVIDO 
+40_10_M_gen.txt      40       0.04       5707         5707         0.00     RESOLVIDO 
+40_10_S_gen.txt      40       0.11       2316         2316         0.00     RESOLVIDO 
+40_1_L_gen.txt       40       0.05       11153        11152        0.01     RESOLVIDO 
+40_1_M_gen.txt       40       0.04       5637         5637         0.00     RESOLVIDO 
+40_1_S_gen.txt       40       0.05       2314         2314         0.00     RESOLVIDO 
+40_2_L_gen.txt       40       0.06       11248        11247        0.01     RESOLVIDO 
+40_2_M_gen.txt       40       0.05       5189         5189         0.00     RESOLVIDO 
+40_2_S_gen.txt       40       0.05       2168         2168         0.00     RESOLVIDO 
+40_3_L_gen.txt       40       0.05       10006        10005        0.01     RESOLVIDO 
+40_3_M_gen.txt       40       0.06       5820         5820         0.00     RESOLVIDO 
+40_3_S_gen.txt       40       0.05       2328         2328         0.00     RESOLVIDO 
+40_4_L_gen.txt       40       0.05       10655        10654        0.01     RESOLVIDO 
+40_4_M_gen.txt       40       0.05       5766         5766         0.00     RESOLVIDO 
+40_4_S_gen.txt       40       0.05       2272         2272         0.00     RESOLVIDO 
+40_5_L_gen.txt       40       0.05       11122        11121        0.01     RESOLVIDO 
+40_5_M_gen.txt       40       0.05       6271         6271         0.00     RESOLVIDO 
+40_5_S_gen.txt       40       0.05       2210         2210         0.00     RESOLVIDO 
+40_6_L_gen.txt       40       0.05       11514        11513        0.01     RESOLVIDO 
+40_6_M_gen.txt       40       0.05       5856         5856         0.00     RESOLVIDO 
+40_6_S_gen.txt       40       0.05       2420         2420         0.00     RESOLVIDO 
+40_7_L_gen.txt       40       0.05       11150        11149        0.01     RESOLVIDO 
+40_7_M_gen.txt       40       0.05       5128         5128         0.00     RESOLVIDO 
+40_7_S_gen.txt       40       0.05       2096         2096         0.00     RESOLVIDO 
+40_8_L_gen.txt       40       0.05       11427        11426        0.01     RESOLVIDO 
+40_8_M_gen.txt       40       0.05       5470         5470         0.00     RESOLVIDO 
+40_8_S_gen.txt       40       0.05       2662         2662         0.00     RESOLVIDO 
+40_9_L_gen.txt       40       0.05       10916        10915        0.01     RESOLVIDO 
+40_9_M_gen.txt       40       0.05       5562         5562         0.00     RESOLVIDO 
+40_9_S_gen.txt       40       0.05       2143         2143         0.00     RESOLVIDO 
+
+============================================================
+ESTATISTICAS RESUMIDAS
+============================================================
+Instancias resolvidas: 90/90 (100.0%)
+Instancias nao resolvidas: 0
+Tempo medio (resolvidas): 0.05s
+Gap medio: 0.00%
+
+Tempo total de execucao: 4.31s
