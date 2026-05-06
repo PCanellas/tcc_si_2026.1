@@ -133,7 +133,7 @@ def aplicar_encaixe(modelo, tasks, dados_tarefas):
     # forçar Aj começar após o início de Ai e Bj terminar antes do fim de Bi
     try:
         modelo.add(modelo.start_of(A_j) >= modelo.start_of(A_i))
-        modelo.add(modelo.end_of(B_j) <= modelo.end_of(B_i))
+        #modelo.add(modelo.end_of(B_j) <= modelo.end_of(B_i))
     except Exception:
         # se a API não aceitar as operações, ignoramos o encaixe
         pass
