@@ -1,0 +1,20 @@
+RESULTADOS DO BENCHMARK - COUPLED TASK SCHEDULING
+============================================================
+Tempo limite por instancia: 900 segundos
+Total de instancias processadas: 3
+
+Instancia            Tarefas  Tempo(s)   Objetivo     Bound        Gap(%)   Status    
+------------------------------------------------------------------------------------------
+20_1_L_gen.txt       0        0.00       N/A          N/A          N/A      SEM SOL   
+20_1_M_gen.txt       20       900.06     1132         1089         3.80     RESOLVIDO 
+20_1_S_gen.txt       20       900.07     457          442          3.28     RESOLVIDO 
+
+============================================================
+ESTATISTICAS RESUMIDAS
+============================================================
+Instancias resolvidas: 2/3 (66.7%)
+Instancias nao resolvidas: 1
+Tempo medio (resolvidas): 900.06s
+Gap medio: 3.54%
+
+Tempo total de execucao: 1800.13s

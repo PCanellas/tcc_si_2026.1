@@ -3,7 +3,6 @@
 
 # importando as bibliotecas do CPLEX
 from docplex.cp.model import CpoModel
-import docplex.cp.solver.solver as solver
 import os
 import glob
 import time
@@ -20,8 +19,8 @@ def ler_instancia(caminho_arquivo):
                 partes = linha.split()
                 if len(partes) == 3:
                     duracao_a = int(partes[0])
-                    duracao_b = int(partes[1])
-                    delay = int(partes[2])
+                    duracao_b = int(partes[2])
+                    delay = int(partes[1])
                     tarefas.append((duracao_a, duracao_b, delay))
     return tarefas
 
@@ -77,69 +76,47 @@ def span_total(tarefa):
     return duracao_a + delay + duracao_b
 
 
-def construir_fases_de_busca(modelo, tasks, dados_tarefas):
-    """Prioriza tarefas com maior span para a busca do CP Optimizer.
-
-    A ideia é fazer o solver fixar primeiro as tarefas mais 'externas'
-    (maiores L = A + delay + B), deixando as menores serem encaixadas nos
-    intervalos livres remanescentes, em um comportamento de 'boneca russa'.
-    """
-    qtdTasks = len(dados_tarefas)
-    ordem = sorted(
-        range(qtdTasks),
-        key=lambda i: (span_total(
-            dados_tarefas[i]), dados_tarefas[i][0] + dados_tarefas[i][1], dados_tarefas[i][2]),
-        reverse=True,
-    )
-
-    fases = [modelo.search_phase(
-        [tasks[i], tasks[i + qtdTasks]]) for i in ordem]
-    modelo.set_search_phases(fases)
-
-
 def aplicar_encaixe(modelo, tasks, dados_tarefas):
-    """Tenta encaixar a maior tarefa possível dentro do maior intervalo.
+    """Tenta encaixar uma tarefa menor dentro da tarefa maior que a contém.
 
-    Seleciona a tarefa com maior span (A+delay+B) e procura outra tarefa
-    (diferente) com maior span que caiba dentro desse intervalo. Se
-    encontrada, adiciona restrições para forçar que a tarefa menor
-    comece após o início da maior e termine antes do fim da maior (ou seja,
-    seja "encaixada").
+    A heurística escolhe a tarefa com maior span como possível container e,
+    entre as demais que cabem nela, fixa a maior tarefa possível como encaixe.
     """
     qtdTasks = len(dados_tarefas)
     if qtdTasks < 2:
         return
 
     spans = [span_total(t) for t in dados_tarefas]
-    # índice da tarefa com maior intervalo
+    # tarefa que servirá como container
     idx_maior = max(range(qtdTasks), key=lambda k: (
-        spans[k], dados_tarefas[k][0] + dados_tarefas[k][1]))
+        spans[k], dados_tarefas[k][0] + dados_tarefas[k][1], dados_tarefas[k][2]))
 
-    # procurar a maior tarefa diferente que caiba dentro do span da maior
+    # procurar a maior tarefa diferente que caiba dentro do span da container
     candidatos = [j for j in range(
         qtdTasks) if j != idx_maior and spans[j] <= spans[idx_maior]]
     if not candidatos:
         return
 
     idx_encaixe = max(candidatos, key=lambda k: (
-        spans[k], dados_tarefas[k][0] + dados_tarefas[k][1]))
+        spans[k], dados_tarefas[k][0] + dados_tarefas[k][1] + dados_tarefas[k][2]))
 
     # variáveis A/B para as tarefas selecionadas
     A_i = tasks[idx_maior]
     B_i = tasks[idx_maior + qtdTasks]
     A_j = tasks[idx_encaixe]
     B_j = tasks[idx_encaixe + qtdTasks]
-
+    # somente se intervalo de Ai for maior do que a duração total de Aj
     # forçar Aj começar após o início de Ai e Bj terminar antes do fim de Bi
     try:
-        modelo.add(modelo.start_of(A_j) >= modelo.start_of(A_i))
-        #modelo.add(modelo.end_of(B_j) <= modelo.end_of(B_i))
+        # pass
+        modelo.add(modelo.start_of(A_j) >= modelo.end_of(A_i))
+        modelo.add(modelo.end_of(B_j) <= modelo.start_of(B_i))
     except Exception:
         # se a API não aceitar as operações, ignoramos o encaixe
         pass
 
 
-def resolver_instancia(dados_tarefas, nome_instancia, tempo_limite=900):
+def resolver_instancia(dados_tarefas, nome_instancia, tempo_limite=60):
     """Resolve uma instância do CTSP e retorna os resultados"""
 
     # criar o modelo do CTSP
@@ -158,8 +135,8 @@ def resolver_instancia(dados_tarefas, nome_instancia, tempo_limite=900):
         # parte B de cada tarefa
         tasks[i+qtdTasks] = modelo.interval_var(length=duracao_b, name=f"B{i}")
         # a parte B deve começar após o encerramento de A e depois de um intervalo
-        modelo.add(modelo.end_before_start(
-            tasks[i], tasks[i+qtdTasks], delay=delay))
+        modelo.add(modelo.start_of(
+            tasks[i+qtdTasks]) == modelo.end_of(tasks[i])+delay)
 
     # as tarefas não podem se sobrepor
     modelo.add(modelo.no_overlap(tasks))
@@ -169,9 +146,7 @@ def resolver_instancia(dados_tarefas, nome_instancia, tempo_limite=900):
                           for i in range(qtdTasks)])
     modelo.minimize(makespan)
 
-    # Busca guiada: tarefas maiores primeiro, menores depois.
-    construir_fases_de_busca(modelo, tasks, dados_tarefas)
-    # Tentativa de encaixe: encaixar a maior tarefa possível dentro do maior intervalo
+    # Tentativa de encaixe: colocar uma tarefa menor dentro de uma maior.
     aplicar_encaixe(modelo, tasks, dados_tarefas)
 
     # Heurística rápida para obter um upper bound inicial (faz pruning)
@@ -187,20 +162,25 @@ def resolver_instancia(dados_tarefas, nome_instancia, tempo_limite=900):
     tempo_inicio = time.time()
 
     # vamos resolver o modelo
-    resp = modelo.solve(TimeLimit=tempo_limite, LogVerbosity="Quiet")
+    modelo.export_model(f"{nome_instancia}.cpo")
+    # resp = None
+    resp = modelo.solve(TimeLimit=tempo_limite, LogVerbosity="Terse")
 
     # marcar o tempo de fim
     tempo_fim = time.time()
     tempo_execucao = tempo_fim - tempo_inicio
+    status_resposta = resp.get_solve_status() if resp is not None else None
+    solucao_encontrada = bool(resp and resp.is_solution())
 
     resultado = {
         'instancia': nome_instancia,
         'num_tarefas': qtdTasks,
         'tempo_execucao': tempo_execucao,
-        'solucao_encontrada': resp is not None
+        'solucao_encontrada': solucao_encontrada,
+        'status': str(status_resposta) if status_resposta is not None else 'Sem resposta'
     }
 
-    if resp:
+    if solucao_encontrada:
         resultado['valor_objetivo'] = resp.get_objective_value()
         resultado['melhor_bound'] = resp.get_objective_bound()
         resultado['gap'] = abs(resultado['valor_objetivo'] - resultado['melhor_bound']) / \
@@ -208,7 +188,8 @@ def resolver_instancia(dados_tarefas, nome_instancia, tempo_limite=900):
             100 if resultado['valor_objetivo'] > 0 else 0
     else:
         resultado['valor_objetivo'] = None
-        resultado['melhor_bound'] = None
+        resultado['melhor_bound'] = resp.get_objective_bound(
+        ) if resp is not None else None
         resultado['gap'] = None
 
     return resultado
@@ -217,7 +198,7 @@ def resolver_instancia(dados_tarefas, nome_instancia, tempo_limite=900):
 def main():
     parser = argparse.ArgumentParser(
         description="Benchmark CTSP com CP Optimizer")
-    parser.add_argument('--input-dir', '-i', default=r"d:\UFF\tcc_si\Coupled task scheduling benchmark\Coupled task scheduling benchmark\Single machine\General set",
+    parser.add_argument('--input-dir', '-i', default=r"d:\UFF\tcc_si\Coupled task scheduling benchmark\Coupled task scheduling benchmark\Single machine\General set\testes",
                         help='Diretório com instâncias (.txt)')
     parser.add_argument('--patterns', '-p', nargs='+', default=['20_*.txt', '25_*.txt', '40_*.txt'],
                         help='Padrões de arquivos (ex: 5_*.txt)')
@@ -316,9 +297,12 @@ def main():
 
         resolvidos = [r for r in resultados if r['solucao_encontrada']]
         nao_resolvidos = [r for r in resultados if not r['solucao_encontrada']]
+        total_resultados = len(resultados)
+        percentual_resolvidos = (
+            len(resolvidos) / total_resultados * 100) if total_resultados else 0.0
 
         arquivo.write(
-            f"Instancias resolvidas: {len(resolvidos)}/{len(resultados)} ({len(resolvidos)/len(resultados)*100:.1f}%)\n")
+            f"Instancias resolvidas: {len(resolvidos)}/{total_resultados} ({percentual_resolvidos:.1f}%)\n")
         arquivo.write(f"Instancias nao resolvidas: {len(nao_resolvidos)}\n")
 
         if resolvidos:
