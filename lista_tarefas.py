@@ -193,6 +193,176 @@ def montar_agrupamentos_menor_gap(tarefas: List[Task], percentual: float = 0.15)
     print(f"Agrupamentos finais de indices: {agrupamentos}")
     return agrupamentos
 
+def formar_trio(disponiveis: List[Task]):
+    """Tenta formar um trio [ancora, encaixada, candidata] a partir da lista
+    'disponiveis' (ja ordenada por intervalo, decrescente).
+
+    Retorna a tupla de tarefas (ancora, encaixada, candidato) ou None caso nao
+    seja possivel completar o trio."""
+
+    if len(disponiveis) < 3:
+        print("Restam menos de 3 tarefas: nao da para formar um trio.")
+        return None
+
+    ancora = disponiveis[0]
+    intervalo_ancora = ancora[2]
+    print(f"\nAncora: tarefa {ancora[0]} com intervalo={intervalo_ancora}")
+
+    # percorre as demais tarefas (ja em ordem decrescente de intervalo) e para
+    # na primeira cuja parte A ou parte B caiba dentro do intervalo da ancora
+    candidato = None
+    for tarefa in disponiveis[1:]:
+        parte_a_cabe = tarefa[1] <= intervalo_ancora
+        parte_b_cabe = tarefa[3] <= intervalo_ancora
+        print(
+            f"Testando tarefa {tarefa[0]}: parteA={tarefa[1]} cabe={parte_a_cabe}, "
+            f"parteB={tarefa[3]} cabe={parte_b_cabe}"
+        )
+        if parte_a_cabe or parte_b_cabe:
+            candidato = tarefa
+            break
+
+    if candidato is None:
+        print("Nenhuma tarefa tem parte que caiba no intervalo da ancora.")
+        return None
+
+    print(f"Par encontrado: ancora {ancora[0]} e candidato {candidato[0]}")
+
+    # nomes curtos para as partes (A=tempo1, B=tempo2) e o intervalo
+    a_anc, int_anc, b_anc = ancora[1], ancora[2], ancora[3]
+    a_cand, int_cand, b_cand = candidato[1], candidato[2], candidato[3]
+
+    # Cada opcao deixa DOIS espacos ociosos: um no intervalo da base (sobra apos
+    # encaixar a parte A da auxiliar) e outro no intervalo da auxiliar (sobra apos
+    # encaixar a parte B da base). A opcao so e valida se os dois espacos >= 0.
+
+    # Opcao A: base = ancora, auxiliar = candidato
+    espaco_base_a = int_anc - a_cand   # int da ancora    - A da candidata
+    espaco_aux_a = int_cand - b_anc    # int da candidata - B da ancora
+    valido_a = espaco_base_a >= 0 and espaco_aux_a >= 0
+    menor_a = min(espaco_base_a, espaco_aux_a)
+    maior_a = max(espaco_base_a, espaco_aux_a)
+
+    # Opcao B: base = candidato, auxiliar = ancora
+    espaco_base_b = int_cand - a_anc   # int da candidata - A da ancora
+    espaco_aux_b = int_anc - b_cand    # int da ancora    - B da candidata
+    valido_b = espaco_base_b >= 0 and espaco_aux_b >= 0
+    menor_b = min(espaco_base_b, espaco_aux_b)
+    maior_b = max(espaco_base_b, espaco_aux_b)
+
+    print(
+        f"Opcao A (base {ancora[0]}): espaco_base={espaco_base_a}, "
+        f"espaco_aux={espaco_aux_a}, menor={menor_a}, valida={valido_a}"
+    )
+    print(
+        f"Opcao B (base {candidato[0]}): espaco_base={espaco_base_b}, "
+        f"espaco_aux={espaco_aux_b}, menor={menor_b}, valida={valido_b}"
+    )
+
+    # entre as opcoes validas, escolhe a de MAIOR menor-espaco (maximin)
+    opcoes = []
+    if valido_a:
+        opcoes.append(("A", menor_a, maior_a))
+    if valido_b:
+        opcoes.append(("B", menor_b, maior_b))
+
+    if not opcoes:
+        print("Nenhuma opcao valida: as partes nao cabem nos dois intervalos.")
+        return None
+
+    # criterio: MAIOR menor-espaco (maximin); em caso de empate, MENOR maior-espaco
+    melhor_opcao, melhor_menor, melhor_maior = max(
+        opcoes, key=lambda item: (item[1], -item[2])
+    )
+    print(
+        f"Melhor opcao: {melhor_opcao} com menor-espaco={melhor_menor}, "
+        f"maior-espaco={melhor_maior}"
+    )
+
+    # Passo 3: procurar uma terceira tarefa (encaixada) que fica entre a ancora
+    # e a candidata. Dentro do intervalo (L) dessa terceira tarefa deve caber o
+    # bloco da opcao vencedora: a parte A da auxiliar colada na parte B da base.
+    if melhor_opcao == "A":
+        # base = ancora, auxiliar = candidato -> A da candidata + B da ancora
+        a_aux, idx_a = candidato[1], candidato[0]
+        b_base, idx_b = ancora[3], ancora[0]
+    else:
+        # base = candidato, auxiliar = ancora -> A da ancora + B da candidata
+        a_aux, idx_a = ancora[1], ancora[0]
+        b_base, idx_b = candidato[3], candidato[0]
+
+    bloco = a_aux + b_base
+    print(
+        f"\nProcurando encaixada (opcao {melhor_opcao}): o intervalo precisa comportar "
+        f"A{idx_a}={a_aux} + B{idx_b}={b_base} = {bloco}"
+    )
+
+    # analisa a lista ordenada por intervalo, sem a ancora e a candidata
+    restantes = [t for t in disponiveis if t is not ancora and t is not candidato]
+    cabem = []
+    for t in restantes:
+        cabe = t[2] >= bloco
+        print(f"Testando encaixada {t[0]}: intervalo={t[2]} comporta {bloco}? {cabe}")
+        if cabe:
+            cabem.append(t)
+
+    if not cabem:
+        print("Nenhuma terceira tarefa comporta o bloco.")
+        return None
+
+    # entre as que comportam o bloco, escolhe a de menor intervalo (encaixe mais
+    # justo, menor desperdicio)
+    encaixada = min(cabem, key=lambda t: t[2])
+    print(f"Encaixada escolhida: tarefa {encaixada[0]} com intervalo={encaixada[2]}")
+    return ancora, encaixada, candidato
+
+
+def encaixar_par_menor_desperdicio(tarefas: List[Task], porcentagem: float = 1.0):
+    """Forma sucessivos trios [ancora, encaixada, candidata] minimizando o
+    desperdicio dos intervalos.
+
+    porcentagem: fracao (0 a 1) que define o TETO de tarefas efetivamente
+    usadas nos trios (1 = 100%). A lista inteira fica disponivel para escolher
+    ancora/candidata/encaixada; a porcentagem so limita quantas tarefas, no
+    total, podem ser consumidas (cada trio consome 3).
+
+    Retorna uma lista de listas, cada uma no formato [ancora, encaixada,
+    candidata] com os indices das tarefas. Encerra ao atingir o teto de tarefas
+    usadas, ao esgotar as disponiveis ou quando nao for possivel formar um trio
+    completo."""
+
+    ordenadas = ordenar_por_intervalo(tarefas)
+
+    # a porcentagem e o teto de tarefas que podem ser usadas no total; a lista
+    # inteira continua disponivel para a escolha das tarefas de cada trio
+    limite = int(len(ordenadas) * porcentagem)
+    disponiveis = ordenadas.copy()
+    print(
+        f"Teto de tarefas a usar: {limite} de {len(ordenadas)} "
+        f"({porcentagem * 100:.0f}%). Cada trio consome 3."
+    )
+
+    resultado = []
+    usadas = 0
+    # so inicia um novo trio se ainda couber (mais 3 tarefas) dentro do teto
+    while len(disponiveis) >= 3 and usadas + 3 <= limite:
+        trio = formar_trio(disponiveis)
+        if trio is None:
+            print("Fluxo encerrado: nao foi possivel formar mais um trio.")
+            break
+
+        ancora, encaixada, candidato = trio
+        lista = [ancora[0], encaixada[0], candidato[0]]
+        resultado.append(lista)
+        usadas += 3
+        print(f"Trio formado: {lista} (tarefas usadas: {usadas}/{limite})")
+
+        # remove as 3 tarefas usadas e segue com as restantes
+        usados = {ancora[0], encaixada[0], candidato[0]}
+        disponiveis = [t for t in disponiveis if t[0] not in usados]
+
+    print(f"\nTrios formados: {resultado}")
+    return resultado
 
 def criaModelo(tarefas:List[Task]):
     # criar o modelo do CTSP
