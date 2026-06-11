@@ -13,15 +13,21 @@ import random
 
 Task = Tuple[int, int, int, int, int]
 
-tempo_inicio=0
+tempo_inicio = 0
 tempo_incumbente = 0
+
+# melhor (menor) desperdicio ja encontrado e a cadeia que o produziu
+minimo_desperdicio: int = sys.maxsize
+lista_ideal: List[Task] = []
+
 
 class MyCallback(CpoCallback):
     def invoke(self, solver, event, sres):
-        global tempo_incumbente,tempo_inicio
+        global tempo_incumbente, tempo_inicio
         if event == 'Solution':
             tempo_incumbente = time.time()
-            #print(tempo_incumbente-tempo_inicio)
+            # print(tempo_incumbente-tempo_inicio)
+
 
 def ler_tarefas(caminho_arquivo: str | Path) -> List[Task]:
     """Ler tarefas em formato: tempo1 intervalo tempo2."""
@@ -64,6 +70,34 @@ def ordenar_por_intervalo(tarefas: List[Task]) -> List[Task]:
 
 def extrair_indices(tarefas: List[Task]) -> List[int]:
     return [tarefa[0] for tarefa in tarefas]
+
+
+def recursiva(tarefasArquivo: List[Task], tarefasFixadas: List[Task], tarefasDisponiveis: List[Task]):
+    global minimo_desperdicio, lista_ideal
+
+    ultima = tarefasFixadas[-1]
+    intervalo = ultima[2]
+    encaixaveis = [
+        tarefa for tarefa in tarefasDisponiveis if tarefa[4] <= intervalo]
+
+    if len(encaixaveis) == 0:
+        desperdicio = sum(
+            tarefasFixadas[i][2] - tarefasFixadas[i + 1][4]
+            for i in range(len(tarefasFixadas) - 1)
+        )
+        desperdicio += tarefasFixadas[-1][2]
+        if desperdicio < minimo_desperdicio:
+            minimo_desperdicio = desperdicio
+            lista_ideal = tarefasFixadas.copy()
+    else:
+        for tarefa in encaixaveis:
+            tarefasFixadas.append(tarefa)
+            tarefasDisponiveis.remove(tarefa)
+            recursiva(tarefasArquivo, tarefasFixadas.copy(),
+                      tarefasDisponiveis.copy())
+            # desfaz para testar a proxima encaixavel a partir do mesmo ponto - sugestão
+            tarefasFixadas.pop()
+            tarefasDisponiveis.append(tarefa)
 
 
 def montar_lista_encadeada(tarefas: List[Task]) -> List[int]:
@@ -113,7 +147,8 @@ def melhor_subconjunto(candidatos: List[Task], capacidade: int, limite_qtd: int)
     menor gap (sobra). E um subset-sum resolvido por programacao dinamica."""
 
     # so interessam tarefas que cabem sozinhas dentro do intervalo
-    candidatos = [tarefa for tarefa in candidatos if 0 < tarefa[4] <= capacidade]
+    candidatos = [tarefa for tarefa in candidatos if 0 <
+                  tarefa[4] <= capacidade]
     if not candidatos or limite_qtd <= 0:
         return []
 
@@ -155,7 +190,8 @@ def montar_agrupamentos_menor_gap(tarefas: List[Task], percentual: float = 0.15)
         return []
 
     orcamento = int(len(tarefas) * percentual)
-    print(f"\nOrcamento de tarefas para os agrupamentos: {orcamento} ({percentual * 100:.0f}% de {len(tarefas)})")
+    print(
+        f"\nOrcamento de tarefas para os agrupamentos: {orcamento} ({percentual * 100:.0f}% de {len(tarefas)})")
     if orcamento < 2:
         print("Orcamento insuficiente para formar agrupamentos.")
         return []
@@ -188,10 +224,12 @@ def montar_agrupamentos_menor_gap(tarefas: List[Task], percentual: float = 0.15)
         gap = capacidade - soma
         cadeia = [ancora[0]] + [tarefa[0] for tarefa in encaixes]
         agrupamentos.append(cadeia)
-        print(f"Encaixadas {[tarefa[0] for tarefa in encaixes]} com soma={soma} e gap={gap}")
+        print(
+            f"Encaixadas {[tarefa[0] for tarefa in encaixes]} com soma={soma} e gap={gap}")
 
     print(f"Agrupamentos finais de indices: {agrupamentos}")
     return agrupamentos
+
 
 def formar_trio(disponiveis: List[Task]):
     """Tenta formar um trio [ancora, encaixada, candidata] a partir da lista
@@ -298,11 +336,13 @@ def formar_trio(disponiveis: List[Task]):
     )
 
     # analisa a lista ordenada por intervalo, sem a ancora e a candidata
-    restantes = [t for t in disponiveis if t is not ancora and t is not candidato]
+    restantes = [
+        t for t in disponiveis if t is not ancora and t is not candidato]
     cabem = []
     for t in restantes:
         cabe = t[2] >= bloco
-        print(f"Testando encaixada {t[0]}: intervalo={t[2]} comporta {bloco}? {cabe}")
+        print(
+            f"Testando encaixada {t[0]}: intervalo={t[2]} comporta {bloco}? {cabe}")
         if cabe:
             cabem.append(t)
 
@@ -313,7 +353,8 @@ def formar_trio(disponiveis: List[Task]):
     # entre as que comportam o bloco, escolhe a de menor intervalo (encaixe mais
     # justo, menor desperdicio)
     encaixada = min(cabem, key=lambda t: t[2])
-    print(f"Encaixada escolhida: tarefa {encaixada[0]} com intervalo={encaixada[2]}")
+    print(
+        f"Encaixada escolhida: tarefa {encaixada[0]} com intervalo={encaixada[2]}")
     return ancora, encaixada, candidato
 
 
@@ -364,7 +405,8 @@ def encaixar_par_menor_desperdicio(tarefas: List[Task], porcentagem: float = 1.0
     print(f"\nTrios formados: {resultado}")
     return resultado
 
-def criaModelo(tarefas:List[Task]):
+
+def criaModelo(tarefas: List[Task]):
     # criar o modelo do CTSP
     modelo = CpoModel()
 
@@ -394,36 +436,40 @@ def criaModelo(tarefas:List[Task]):
                           for i in range(qtdTasks)])
     modelo.minimize(makespan)
 
-    #callback serve para anotarmos o tempo da melhor solução encontrada
+    # callback serve para anotarmos o tempo da melhor solução encontrada
     modelo.add_solver_callback(MyCallback())
 
-    return modelo,tasks
+    return modelo, tasks
 
-def adicionaEncaixes(modelo,tasks,lista_encaixe):
-    #qauntidade de tarefas da instância
+
+def adicionaEncaixes3(modelo, tasks, lista3, tarefas):
+    # quantidade de tarefas da instância
     qtdTarefas = len(tasks)//2
-    
-    #adicionando os encaixes
-    for i in range(len(lista_encaixe)-1):
-        indice1 = lista_encaixe[i]
-        indice2 = lista_encaixe[i+1]
-        print(f"Tarefa {indice2} será colocada dentro da tarefa {indice1}")
-        A1 = tasks[indice1]
-        B1 = tasks[indice1+qtdTarefas]
-        A2 = tasks[indice2]
-        B2 = tasks[indice2+qtdTarefas]
-        modelo.add(modelo.start_of(A2) >= modelo.end_of(A1))
-        modelo.add(modelo.end_of(B2) <= modelo.start_of(B1))
+
+    # adicionando os encaixes
+    for t in lista3:
+        print(f"Encaixe trio {t[0],t[1],t[2]}")
+        A0 = tasks[t[0]]
+        B0 = tasks[t[0]+qtdTarefas]
+        A1 = tasks[t[1]]
+        B1 = tasks[t[1]+qtdTarefas]
+        A2 = tasks[t[2]]
+        B2 = tasks[t[2]+qtdTarefas]
+
+        modelo.add(modelo.start_of(A1) >= modelo.end_of(A0))
+        modelo.add(modelo.end_of(A1) <= modelo.start_of(A2))
+        # modelo.add(modelo.end_of(A2) == modelo.start_of(B0))
 
     return modelo
 
-def executaModelo(modelo,tempo_limite):
+
+def executaModelo(modelo, tempo_limite):
     global tempo_inicio
     # marcar o tempo de início
     tempo_inicio = time.time()
 
     # vamos resolver o modelo
-    #modelo.export_model(f"{nome_instancia}.cpo")
+    # modelo.export_model(f"{nome_instancia}.cpo")
     resp = modelo.solve(TimeLimit=tempo_limite, LogVerbosity="Terse")
 
     # marcar o tempo de fim
@@ -454,12 +500,12 @@ def executaModelo(modelo,tempo_limite):
 
 
 def main() -> None:
-    if len(sys.argv)<2:
+    if len(sys.argv) < 2:
         print("Deve ser informado o nome da instância")
         exit(-1)
-        
-    filename = "inst\\Single machine\\General set\\"+sys.argv[1]
-    
+
+    filename = "./inst/Single machine/General set/"+sys.argv[1]
+
     print("\nTarefas carregadas (indice, duracaoA, intervalo, duracaoB, tempoTotal):")
     tarefas = ler_tarefas(filename)
     print(tarefas)
@@ -484,29 +530,34 @@ def main() -> None:
     lista_encadeada = montar_lista_encadeada(tarefas)
     print(lista_encadeada)
 
-    #cria o modelo contendo as tasks
-    modelo,tasks = criaModelo(tarefas)
+    lista3 = encaixar_par_menor_desperdicio(tarefas, 0.15)
 
-    #adiciona os encaixes a partir da lista encadeada (completa)
-    modelo = adicionaEncaixes(modelo,tasks,lista_encadeada)
+    # cria o modelo contendo as tasks
+    modelo, tasks = criaModelo(tarefas)
 
-    #executa o modelo por 600 segundos
-    resultado = executaModelo(modelo,600)
+    # adiciona os encaixes a partir da lista encadeada (completa)
+    modelo = adicionaEncaixes3(modelo, tasks, lista3, tarefas)
+
+    # executa o modelo por 600 segundos
+    resultado = executaModelo(modelo, 600)
 
     melhorSolucao = resultado['valor_objetivo']
     melhorBound = resultado['melhor_bound']
     tempoTotal = resultado['tempo_execucao']
     tempoSolucao = resultado['tempo_solucao']
-    
+
     # Mostrar progresso
     if resultado['solucao_encontrada']:
-        print(f"  ✓ Resolvido - Obj: {melhorSolucao}, Bound: {melhorBound}, Tempo Total: {tempoTotal:.2f}, Tempo Solução: {tempoSolucao:.2f}s")
+        print(
+            f"  ✓ Resolvido - Obj: {melhorSolucao}, Bound: {melhorBound}, Tempo Total: {tempoTotal:.2f}, Tempo Solução: {tempoSolucao:.2f}s")
     else:
         print(f"  ✗ Sem solução - Tempo: {tempoTotal:.2f}s")
-        
-    #escreve os resultados no arquivo "resuktadosPython.txt"
-    with open("resultadosPython.txt","a") as arq:
-        print(f"{sys.argv[1]} {melhorSolucao} {melhorBound} {tempoTotal:.2f} {tempoSolucao:.2f}",file=arq)
+
+    # escreve os resultados no arquivo "resuktadosPython.txt"
+    with open("resultadosPython.txt", "a") as arq:
+        print(
+            f"{sys.argv[1]} {melhorSolucao} {melhorBound} {tempoTotal:.2f} {tempoSolucao:.2f}", file=arq)
+
 
 if __name__ == "__main__":
     main()
